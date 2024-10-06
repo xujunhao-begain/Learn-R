@@ -661,350 +661,137 @@ cv10 %>%
 #如果要计算最终的平均模型效果，对 rmse 列作汇总均值即可，这里不再详述。
 
 
-3.3.3 批量建模
-有时候需要对数据做分组，批量地对每个分组建立同样的模型，并提取和使用批量的模型 结果，这就是批量建模。
-批量建模通常是作为探索性数据分析的一种手段，批量建立简单模型以理解复杂的数据集。 批量建模的“笨方法”是手动写 for 循环实现，再手动提取、合并模型结果。本节要介绍的是 tidyverse 中的两种优雅而简洁的做法。
- 用嵌套数据框 + purrr::map 实现。
- 用 dplyr 包的 rowwise 技术，具有异曲同工之妙。
-下面用 ecostats 数据集演示，整理自国家统计局网站，包含 2001—2017 年我国不同地区 的人口、居民消费水平、人均 GDP 等。
-## # A tibble: 527 x 7
-1.利用嵌套数据框 + purrr::map 先来介绍一个概念:嵌套数据框(列表列)，示例如图 3.52 所示。
-图 3.52 嵌套数据框示例 异步社区cloudcHCO8tlw0iz(15725519632) 专享 请尊重版权
+
+#3.3.3 批量建模
+#有时候需要对数据做分组，批量地对每个分组建立同样的模型，并提取和使用批量的模型结果，
+#这就是批量建模。
+#批量建模通常是作为探索性数据分析的一种手段，批量建立简单模型以理解复杂的数据集。 
+#批量建模的“笨方法”是手动写 for 循环实现，再手动提取、合并模型结果。
+#本节要介绍的是 tidyverse 中的两种优雅而简洁的做法。
+#用嵌套数据框 + purrr::map 实现。
+#用 dplyr 包的 rowwise 技术，具有异曲同工之妙
+#下面用 ecostats 数据集演示，整理自国家统计局网站，包含 2001—2017 年我国不同地区
+#的人口、居民消费水平、人均 GDP 等
+
+#1.利用嵌套数据框 + purrr::map 先来介绍一个概念:嵌套数据框(列表列)
 load("data/ecostats.rda")
 ecostats
-## ##
-## 1 安徽
-## 2 北京
-## 3 福建
-## 4 甘肃
-## 5 广东
-## 6 广西
-## # ... with 521 more rows
-Region  Year Electricity Investment Consumption Population gdpPercap
-<chr>  <dbl>
-2001
-2001
-2001
-2001
-2001
-2001
-<dbl>      <dbl>
-360.        893.
-400.       1513.
-439.       1173.
-306.        460.
-<dbl>      <dbl>
-2739       6128
-9057       1385
-4770       3445
-2099       2523
-5445       8733
-2572       4788
-<dbl>
-5716.
-27881.
-11823.
-4461.
-13886.
-4760.
-1458.       3484.
-332.        656.
+#当我们想要对各地区的数据做重复操作，需要先对数据框用 group_nest()针对分组变量
+#Region 做分组嵌套，就能得到嵌套数据框，每组数据作为数据框嵌套到列表列 data。
+#嵌套数据框 的每一行是一个分组，表示一个地区的整个时间跨度内的所有观测，
+#而不是某个单独时间点的观测
 
-当我们想要对各地区的数据做重复操作，需要先对数据框用 group_nest()针对分组变量 Region 做分组嵌套，就能得到嵌套数据框，每组数据作为数据框嵌套到列表列 data。嵌套数据框 的每一行是一个分组，表示一个地区的整个时间跨度内的所有观测，而不是某个单独时间点的观测。
-## # A tibble: 31 x 2
-##    Region               data
-##    <chr>  <list<tibble[,6]>>
 by_region = ecostats %>%
-group_nest(Region)
+  group_nest(Region)
+
 by_region
-## 1 安徽
-## 2 北京
-## 3 福建
-## 4 甘肃
-## 5 广东
-## 6 广西
-## # ... with 25 more rows
-by_region$data[[1]] # 查看列表列的第1个元素的内容 unnest(by_region, data) # 解除嵌套, 还原到原数据
+by_region$data[[1]] # 查看列表列的第1个元素的内容 
+unnest(by_region, data) # 解除嵌套, 还原到原数据
+
+
+#嵌套数据框与普通数据框的操作一样，比如用 filter()函数筛选行，用 mutate()函数修改列。
+#这里对嵌套的 data 列，用 mutate()函数修改该列，增加一个模型列 model，
+#以存放用该行的 data 数据拟合的线性回归模型，即分别对每个地区拟合人均消费水平对
+#人均 GDP 的线性回归模型，并保存到 model 列。这就实现了批量建模:
 by_region = by_region %>%
-mutate(model = map(data, ~ lm(Consumption ~ gdpPercap, .x)))
+  mutate(model = map(data, ~ lm(Consumption ~ gdpPercap, .x)))
 by_region
-## 1 安徽
-## 2 北京
-## 3 福建
-## 4 甘肃
-## 5 广东
-## 6 广西
-## # ... with 25 more rows
-[17x6] [17x6] [17x6] [17x6] [17x6] [17x6]
-嵌套数据框与普通数据框的操作一样，比如用 filter()函数筛选行，用 mutate()函数 修改列。这里对嵌套的 data 列，用 mutate()函数修改该列，增加一个模型列 model，以存 放用该行的 data 数据拟合的线性回归模型，即分别对每个地区拟合人均消费水平对人均 GDP 的线性回归模型，并保存到 model 列。这就实现了批量建模:
-## # A tibble: 31 x 3
-##    Region               data model
-##    <chr>  <list<tibble[,6]>> <list>
-[17 x 6] <lm>
-[17 x 6] <lm>
-[17 x 6] <lm>
-[17 x 6] <lm>
-[17 x 6] <lm>
-[17 x 6] <lm>
-继续用 mutate()函数修改列，借助 map_*函数从模型列、数据列计算均方根误差、R2、 斜率、p 值:
-            ## # A tibble: 31 x 7
-            Region               data model   rmse   rsq slope     pval
-          <chr>  <list<tibble[,6]>> <list> <dbl> <dbl> <dbl>    <dbl>
-            [17 x 6] <lm>
-            [17 x 6] <lm>
-            [17 x 6] <lm>
-            [17 x 6] <lm>
-            [17 x 6] <lm>
-            [17 x 6] <lm>
-            185. 0.998 0.327 2.36e-22
-          2005. 0.975 0.392 1.71e-13
-          415. 0.996 0.287 2.20e-19
-          600. 0.976 0.448 1.55e-13
-          592. 0.994 0.417 2.40e-18
-          270. 0.996 0.433 9.88e-20
-          也可以配合 broom 包的函数 tidy()、glance()、augment()批量、整洁地提取模型结 果，这些结果仍是嵌套的列表列，若要完整地显示出来，需要借助 unnest()函数解除嵌套。
-          批量提取模型系数估计及其统计量，代码如下:
-            异步社区cloudcHCO8tlw0iz(15725519632) 专享 请尊重版权
-          3.3 统计建模技术 163
-          library(modelr)
-          by_region %>%
-            mutate(rmse = map2_dbl(model, data, rmse),
-                   rsq = map2_dbl(model, data, rsquare),
-                   slope = map_dbl(model, ~ coef(.x)[[2]]),
-                   pval = map_dbl(model, ~ glance(.x)$p.value))
-          ## ##
-          ## 1 安徽
-          ## 2 北京
-          ## 3 福建
-          ## 4 甘肃
-          ## 5 广东
-          ## 6 广西
-          ## # ... with 25 more rows
-          
-          164 3 可视化与建模技术 by_region %>%
-            ## # A tibble: 62 x 6
-            mutate(result = map(model, tidy)) %>%
-            select(Region, result) %>%
-            unnest(result)
-          ##
-          ## <chr>
-          ## 1 安徽
-          ## 2 安徽
-          ## 3 北京
-          ## 4 北京
-          ## 5 福建
-          ## 6 福建
-          ## # ... with 56 more rows
-          批量提取模型诊断信息，代码如下:
-            by_region %>%
-            ## # A tibble: 31 x 13
-            Region term         estimate  std.error statistic  p.value
-          <chr>           <dbl>      <dbl>
-            (Intercept)   942.      89.4
-          gdpPercap       0.327    0.00340
-          (Intercept) -3824.    1301.
-          gdpPercap       0.392    0.0160
-          (Intercept)  1502.     214.
-          gdpPercap       0.287    0.00471
-          <dbl>    <dbl>
-            10.5   2.47e- 8
-          96.2   2.36e-22
-          -2.94  1.01e- 2
-          24.4   1.71e-13
-          7.01  4.21e- 6
-          60.9   2.20e-19
-          mutate(result = map(model, glance)) %>%
-            select(Region, result) %>%
-            unnest(result)
-          ##
-          ##    <chr>      <dbl>
-          ## 1 安徽 0.998
-          ## 2 北京 0.975
-          ## 3 福建 0.996
-          ## 4 甘肃 0.976
-          ## 5 广东 0.994
-          ## 6 广西 0.996
-          ## # ... with 25 more rows, and 4 more variables: BIC <dbl>, deviance <dbl>, ## # df.residual <int>, nobs <int>
-          批量增加预测值列、残差列等，代码如下:
-            by_region %>%
-            ## # A tibble: 527 x 9
-            Region r.squared adj.r.squared sigma statistic  p.value
-          <dbl> <dbl>
-            df logLik   AIC
-          <dbl>    <dbl> <dbl>  <dbl> <dbl>
-            0.998
-          0.974
-          0.996
-          0.974
-          0.994
-          0.996
-          197.
-          2134.
-          441.
-          638.
-          630.
-          287.
-          9260. 2.36e-22
-          597. 1.71e-13
-          3713. 2.20e-19
-          605. 1.55e-13
-          2696. 2.40e-18
-          4133. 9.88e-20
-          1  -113.  232.
-          1  -153.  313.
-          1  -127.  259.
-          1  -133.  272.
-          1  -133.  271.
-          1  -119.  245.
-          mutate(result = map(model, augment)) %>%
-            select(Region, result) %>%
-            unnest(result)
-          ##
-          ## <chr>
-          ## 1 安徽
-          ## 2 安徽
-          ## 3 安徽
-          ## 4 安徽
-          ## 5 安徽
-          ## 6 安徽
-          ## # ... with 521 more rows, and 1 more variable: .std.resid <dbl>
-          2.利用 dplyr 包的 rowwise 技术
-          dplyr 包的 rowwise(按行方式)可以理解为一种特殊的分组:将每一行作为一组。
-          若对 ecostats 数据框用 nest_by()函数做嵌套就得到 rowwise 类型的嵌套数据框: by_region = ecostats %>%
-            ## # A tibble: 31 x 2
-            ## # Rowwise:  Region
-            Region Consumption gdpPercap .fitted  .resid   .hat .sigma   .cooksd
-          <dbl>     <dbl>   <dbl>   <dbl>  <dbl>  <dbl>     <dbl>
-            nest_by(Region)
-          by_region
-          1 安徽 2 北京 3 福建 4 甘肃 5 广东
-          [17x6] [17x6] [17x6] [17x6] [17x6]
-          2739     5716.
-          2988     6230.
-          3312     6990.
-          3707     8236.
-          3870     9274.
-          4409    10639.
-          2811.  -72.5  0.140
-          2980.    8.49 0.135
-          3228.   84.0  0.128
-          3635.   71.7  0.117
-          3975. -105.   0.109
-          4421.  -12.2  0.0986
-          203. 0.0128
-          204. 0.000167
-          203. 0.0153
-          203. 0.00991
-          202. 0.0194
-          204. 0.000232
-          ##
-          ##
-          ##
-          ##
-          ##
-          ##
-          ##
-          Region               data
-          <chr>  <list<tibble[,6]>>
-            异步社区cloudcHCO8tlw0iz(15725519632) 专享 请尊重版权
-          
-          ## 6广西 [17x6] ## # ... with 21 more rows
-          注意，这里多了Rowwise: Region信息。
-          一个地区的数据占一行，rowwise 式的逻辑，就是按行操作数据，正好适合逐行地对每个 嵌套的数据框建模和提取模型信息。
-          这些操作是与 mutate()和 summarise()函数连用来实现，前者会保持 rowwise 模式， 但需要计算结果的行数保持不变;后者相当于对每行结果做汇总，结果行数可变(变多)，不再 具有 rowwise 模式。
-          by_region = by_region %>%
-            ## # A tibble: 31 x 3
-            ## # Rowwise:  Region
-            ##    Region               data model
-            ##    <chr>  <list<tibble[,6]>> <list>
-            mutate(model = list(lm(Consumption ~ gdpPercap, data)))
-          by_region
-          下面结果与前文相同，故略过。
-          然后直接用 mutate()函数修改列，从模型列、数据列计算均方根误差、R2、斜率、p 值: by_region %>%
-            也可以配合 broom 包的函数 tidy()、glance()、augment()批量、整洁地提取模型结果。
-          批量提取模型系数估计及其统计量，代码如下:
-            by_region %>%
-            summarise(tidy(model))
-          批量提取模型诊断信息，代码如下:
-            by_region %>%
-            summarise(glance(model))
-          批量增加预测值列、残差列等，代码如下:
-            by_region %>%
-            summarise(augment(model))
-          rowwise 化方法的代码更简洁，但速度不如“嵌套数据框 + purrr::map”快。 3.(分组)滚动回归 金融时间序列数据分析中常用到滚动回归，这是滑窗迭代与批量建模的结合，即对数据框
-          按时间窗口滑动，在各个滑动窗口批量地构建回归模型并提取模型结果。
-          滚动回归借助 slider 包很容易实现。下面看一个更进一步的案例:分组滚动回归。 stocks 股票数据是整洁的长表，但这里要做股票之间的线性回归，先进行长表变宽表，
-          再根据日期列计算一个 season 列用于分组:
-            library(lubridate)
-          library(slider)
-          3.3 统计建模技术 165
-          ## 1安徽
-          ## 2北京
-          ## 3福建
-          ## 4甘肃
-          ## 5广东
-          ## 6广西
-          ## # ... with 25 more rows
-          [17 x 6] <lm>
-            [17 x 6] <lm>
-            [17 x 6] <lm>
-            [17 x 6] <lm>
-            [17 x 6] <lm>
-            [17 x 6] <lm>
-            mutate(rmse = rmse(model, data),
-                   rsq = rsquare(model, data),
-                   slope = coef(model)[[2]],
-                   pval = glance(model)$p.value)
-          异步社区cloudcHCO8tlw0iz(15725519632) 专享 请尊重版权
-          
-          166 3 可视化与建模技术
-          load("data/stocks.rda")
-          df = stocks %>%
-            pivot_wider(names_from = Stock, values_from = Close) %>%
-            mutate(season = quarter(Date))
-          df
-          ## # A tibble: 251 x 5
-          ##    Date       Google Amazon Apple season
-          ##    <date>      <dbl>  <dbl> <dbl>  <int>
-          ##  1 2017-01-03
-          ##  2 2017-01-04
-          ##  3 2017-01-05
-          ##  4 2017-01-06
-          ##  5 2017-01-09
-          ##  6 2017-01-10
-          ## # ... with 245 more rows
-          786.   754.  116.      1
-          787.   757.  116.      1
-          794.   780.  117.      1
-          806.   796.  118.      1
-          807.   797.  119.      1
-          805.   796.  119.      1
-          如图 3.53 所示，通过绘图结果可以看出，Amazon 与 Google 股票是大致符合线性关系的: df %>%
-            图 3.53 探索 Amazon 与 Google 股票之间的关系
-          因此，我们认为对这两只股票做滚动线性回归是合理的。为了演示分组滚动回归，我们再 加入分组操作逻辑，分别对每个季度做五步滚动线性回归，这当然也离不开 slide()滑窗迭代。
-          df_roll = df %>%
-            ## # A tibble: 251 x 6
-            ##    Date       Google Amazon Apple season models
-            ##    <date>      <dbl>  <dbl> <dbl>  <int> <list>
-            ggplot(aes(Amazon, Google)) +
-            geom_line(color = "steelblue", size = 1.1)
-          
-          group_by(season) %>%
-            mutate(models = slide(cur_data(), ~ lm(Google ~ Amazon, .x),
-                                  ungroup()
-                                  df_roll
-                                  .before = 2, .after = 2, .complete = TRUE)) %>%
-            ##  1 2017-01-03   786.   754.  116.
-            ##  2 2017-01-04   787.   757.  116.
-            ##  3 2017-01-05   794.   780.  117.
-            ##  4 2017-01-06   806.   796.  118.
-            ##  5 2017-01-09   807.   797.  119.
-            ##  6 2017-01-10   805.   796.  119.
-            ## # ... with 245 more rows
-            代码解释
-          1 <NULL>
-            1 <NULL>
-            1 <lm>
-            1 <lm>
-            1 <lm> 1 <lm>
-            (1)slide()函数的第 1 个参数 cur_data()是专门与 group_by()函数搭配使用的，代表
+#继续用 mutate()函数修改列，借助 map_*函数从模型列、数据列计算均方根误差、R2、 
+#斜率、p 值:
+library(modelr)
+by_region %>%
+  mutate(rmse = map2_dbl(model, data, rmse),
+         rsq = map2_dbl(model, data, rsquare),
+         slope = map_dbl(model, ~ coef(.x)[[2]]),
+         pval = map_dbl(model, ~ glance(.x)$p.value))
+
+#也可以配合 broom 包的函数 tidy()、glance()、augment()批量、整洁地提取模型结果，
+#这些结果仍是嵌套的列表列，若要完整地显示出来，需要借助 unnest()函数解除嵌套
+
+#批量提取模型系数估计及其统计量，代码如下:
+by_region %>%
+  mutate(result = map(model, tidy)) %>%
+  select(Region, result) %>%
+  unnest(result)
+
+#批量提取模型诊断信息，代码如下:
+by_region %>%
+  mutate(result = map(model, glance)) %>%
+  select(Region, result) %>%
+  unnest(result)
+
+#批量增加预测值列、残差列等，代码如下:
+by_region %>%
+  mutate(result = map(model, augment)) %>%
+  select(Region, result) %>%
+  unnest(result)
+
+#2.利用 dplyr 包的 rowwise 技术
+#dplyr 包的 rowwise(按行方式)可以理解为一种特殊的分组:将每一行作为一组
+#若对 ecostats 数据框用 nest_by()函数做嵌套就得到 rowwise 类型的嵌套数据框:
+by_region = ecostats %>%
+  nest_by(Region)
+  by_region
+
+#注意，这里多了Rowwise: Region信息
+#一个地区的数据占一行，rowwise 式的逻辑，就是按行操作数据，正好适合逐行地对每个
+#嵌套的数据框建模和提取模型信息。
+#这些操作是与 mutate()和 summarise()函数连用来实现，前者会保持 rowwise 模式，
+#但需要计算结果的行数保持不变;后者相当于对每行结果做汇总，结果行数可变(变多)，
+#不再具有 rowwise 模式
+by_region = by_region %>%
+  mutate(model = list(lm(Consumption ~ gdpPercap, data)))
+by_region
+
+#下面结果与前文相同，故略过。
+#然后直接用 mutate()函数修改列，从模型列、数据列计算均方根误差、R2、斜率、p 值: 
+by_region %>%
+  mutate(rmse = rmse(model, data),
+         rsq = rsquare(model, data),
+         slope = coef(model)[[2]],
+         pval = glance(model)$p.value)
+
+#也可以配合 broom 包的函数 tidy()、glance()、augment()批量、整洁地提取模型结果。
+#批量提取模型系数估计及其统计量，代码如下:
+by_region %>%
+  summarise(tidy(model))
+#批量提取模型诊断信息，代码如下:
+by_region %>%
+  summarise(glance(model))
+#批量增加预测值列、残差列等，代码如下:
+by_region %>%
+  summarise(augment(model))
+#rowwise 化方法的代码更简洁，但速度不如“嵌套数据框 + purrr::map”快。 
+
+#3.(分组)滚动回归 
+#金融时间序列数据分析中常用到滚动回归，这是滑窗迭代与批量建模的结合，即对数据框
+#按时间窗口滑动，在各个滑动窗口批量地构建回归模型并提取模型结果。
+#滚动回归借助 slider 包很容易实现。
+#下面看一个更进一步的案例:分组滚动回归。 
+#stocks 股票数据是整洁的长表，但这里要做股票之间的线性回归，先进行长表变宽表，
+#再根据日期列计算一个 season 列用于分组:
+library(lubridate)
+library(slider)
+load("data/stocks.rda")
+df = stocks %>%
+  pivot_wider(names_from = Stock, values_from = Close) %>%
+  mutate(season = quarter(Date))
+df
+
+#如图 3.53 所示，通过绘图结果可以看出，Amazon 与 Google 股票是大致符合线性关系的:
+df %>% 
+  ggplot(aes(Amazon, Google)) +
+  geom_line(color = "steelblue", size = 1.1)
+
+#因此，我们认为对这两只股票做滚动线性回归是合理的。为了演示分组滚动回归，我们再
+#加入分组操作逻辑，分别对每个季度做五步滚动线性回归，这当然也离不开 slide()滑窗迭代
+df_roll = df %>%
+  group_by(season) %>%
+  mutate(models = slide(cur_data(), ~ lm(Google ~ Amazon, .x),
+                        .before = 2, .after = 2, .complete = TRUE)) %>%
+  ungroup()
+
+df_roll
+
+
+#(1)slide()函数的第 1 个参数 cur_data()是专门与 group_by()函数搭配使用的，代表
