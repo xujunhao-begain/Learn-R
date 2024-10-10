@@ -1,0 +1,9 @@
+ltv :
+  course_type_detail : 起始类型
+  l1_sku : 来源SKU
+  l1_user_group : 来源人群
+  l1_goal_channel_type : 来源渠道
+  go_course_type_detail : 去向类型
+  datedif : 支付起天数差
+  total_gmv : 总GMV
+  user_cnt : 人数
