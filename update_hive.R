@@ -1,7 +1,7 @@
 library(RJDBC)
 
 # 读取 YAML 配置文件
-config <- yaml::read_yaml("../my_config.yaml")$my_hive
+config <- yaml::read_yaml("../../my_config.yaml")$my_hive
  
 # 配置 Hive 连接信息
 hive_driver <- JDBC("org.apache.hive.jdbc.HiveDriver",
@@ -53,9 +53,9 @@ run_hive_query <- function(sql_file_path, output_data_name) {
   return(result) 
 }
 # 用法
-#print("开始执行ltv.sql")
-#run_hive_query("sql/ltv.sql", "ltv_sql_result")
-#print("完成执行ltv.sql")
+print("开始执行ltv.sql")
+run_hive_query("sql/ltv.sql", "ltv_sql_result")
+print("完成执行ltv.sql")
 print("开始执行B2C简报数据.sql")
 run_hive_query("sql/B2C简报数据.sql", "b2c_report_sql_result")
 print("完成执行B2C简报数据.sql")
