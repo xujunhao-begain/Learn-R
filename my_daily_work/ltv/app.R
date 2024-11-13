@@ -590,7 +590,7 @@
 
 
 ##################################版本4
-#source("update_data.R")
+source("../update_hive.R")
 source("func.R")
 library(yaml)
 library(rlang)
