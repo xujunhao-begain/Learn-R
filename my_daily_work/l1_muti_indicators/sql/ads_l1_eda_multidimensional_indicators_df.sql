@@ -1,0 +1,2 @@
+SELECT *
+FROM  strategy_superset.ads_l1_eda_multidimensional_indicators_df

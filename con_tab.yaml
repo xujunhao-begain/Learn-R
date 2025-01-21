@@ -1,0 +1,96 @@
+ads_l1_eda_multidimensional_indicators_df :
+    is_target : 是否标内学期
+    pay_year : 订单支付年份'
+    pay_month : 订单支付月份
+    pay_date : 订单支付日期
+    term_start_year : 学期开始年份
+    term_start_month : 学期开始月份
+    term_start_date : 学期开始日期
+    term_id : 学期id
+    term : 学期名称
+    user_group : 用户群体
+    business_line : 定标业务线
+    goal_class_tag : 定标班型
+    sku : 定标SKU
+    goal_operation_group : 定标团队
+    renewal_staff_id : 续报老师员工id
+    renewal_staff_name : 续报班级老师真名
+    renewal_staff_employee_no : 续报老师工号
+    renewal_counselor_group_id : 续报老师组id
+    renewal_counselor_group_name : 续报老师组名称
+    renewal_counselor_group_city : 续报老师组基地
+    is_new_renewal_staff : 续报老师是否新人
+    is_new_class_ct_business : 本期次老师的班型是否与上期次一致
+    goal_mkt_group : 定标核算组
+    channel_type_name : 渠道类型
+    goal_channel_type : 定标渠道类型
+    channel_subtype_name : 渠道子类型
+    channel_group_name : 渠道组名称
+    talent_author_name : 达人名称
+    diff_term_start : 等待开课天数
+    is_repeat_order : 是否重复购买
+    pay_grade : 支付年级
+    parents_province : 家长所在省份
+    parents_city : 家长所在城市
+    city_level : 家长所在城市线级
+    login : 登录人数
+    enroll : 进班人数
+    wx_add_ahead_unlocked1 : 首课解锁前加微人数
+    wx_add : 累计加微人数
+    wx_add_t3 : 3日内加微人数
+    attend0_ahead_unlocked1 : 首课解锁前准备课到课人数
+    attend1_ahead_del_wx : 1课前删微人数
+    attend1_t6 : 1课到课人数
+    attend2_t6 : 2课到课人数
+    attend3_t6 : 3课到课人数
+    attend4_t6 : 4课到课人数
+    attend5_t6 : 5课到课人数
+    attend_last_t6 : 末课到课人数
+    finish1_t6 : 1课完课人数
+    finish2_t6 : 2课完课人数
+    finish3_t6 : 3课完课人数
+    finish4_t6 : 4课完课人数
+    finish5_t6 : 5课完课人数
+    finish_last_t6 : 末课完课人数
+    renewal_acc : 累计续报人数
+    renewal_t0  : 1日续报人数
+    renewal_t1  : 2日续报人数
+    renewal_t2  : 3日续报人数
+    renewal_t3  : 4日续报人数
+    renewal_lst : 末日续报人数
+    inrenewal_renewal_gmv : 续报期内gmv
+    renewal_gmv : 累计gmv
+    refund_cnt : 年课退费人数
+    refund_before_enter_class_cnt : 年课进班前退费人数
+    refund_before_unclock_class_cnt : 年课开课前退费人数
+    refund_after_unclock_class_cnt : 年课开课后退费人数
+    refund_fullvl_cnt : 年课非全额期退费人数
+
+ltv :
+  course_type_detail : 起始类型
+  l1_sku : 来源SKU
+  l1_user_group : 来源人群
+  l1_goal_channel_type : 来源渠道
+  go_course_type_detail : 去向类型
+  datedif : 支付起天数差
+  total_gmv : 总GMV
+  user_cnt : 人数
+  
+calculated_metrics :
+  - 加微率: "加微率 = round(sum(wx_add) / sum(enroll), 2)"
+  - 首课前加微率: "首课前加微率 = round(sum(wx_add_ahead_unlocked1) / sum(enroll),2)"
+  - 三日内加微率: "三日内加微率 = round(sum(wx_add_t3) / sum(enroll),2)"
+  - 首课前删微率: "首课前删微率 = round(sum(attend1_ahead_del_wx) / sum(enroll),2)"
+  - 留存率: "留存率 = round(sum(finish_last_t6) / sum(attend1_t6),2)"
+  - 末课完课率: "末课完课率 = round(sum(finish_last_t6) / sum(enroll),2)"
+  - 累计完转率: "累计完转率 = round(sum(renewal_t0) / sum(finish_last_t6),2)"
+  - 首日续报率: "首日续报率 = round(sum(renewal_t0) / sum(enroll),2)"
+  - 二日续报率: "二日续报率 = round(sum(renewal_t1) / sum(enroll),2)"
+  - 三日续报率: "三日续报率 = round(sum(renewal_t2) / sum(enroll),2)"
+  - 四日续报率: "四日续报率 = round(sum(renewal_t3) / sum(enroll),2)"
+  - 累计续报率: "累计续报率 = round(sum(renewal_acc) / sum(enroll),2)"
+  - 退费率: "退费率 = round(sum(refund_cnt) / sum(renewal_acc),2)"
+  - 进班前退费率: "进班前退费率 = round(sum(refund_before_enter_class_cnt) / sum(renewal_acc),2)"
+  - 开课前退费率: "开课前退费率 = round(sum(refund_before_unclock_class_cnt) / sum(renewal_acc),2)"
+  - 开课后退费率: "开课后退费率 = round(sum(refund_after_unclock_class_cnt) / sum(renewal_acc),2)"
+  - 非全额期退费率: "非全额期退费率 = round(sum(refund_fullvl_cnt) / sum(renewal_acc),2)"
