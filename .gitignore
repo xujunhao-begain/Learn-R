@@ -5,3 +5,7 @@
 .DS_Store
 test.R
 my_config.yaml
+*.csv
+*.xlsx
+*.RDataTmp
+*.RDataTmp1
