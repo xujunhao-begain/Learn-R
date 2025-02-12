@@ -20,7 +20,7 @@ mapping_colname <- function(ls, col) {
   }
 }
 
-con_tab <- yaml::read_yaml("../../con_tab.yaml")
+#con_tab <- yaml::read_yaml("../../con_tab.yaml")
 
 
 # Customize sequence and colors ------------------------------------------------

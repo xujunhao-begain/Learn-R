@@ -1,0 +1,2 @@
+select *
+from strategy_superset.ads_eda_btc_business_regular_df
