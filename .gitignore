@@ -9,3 +9,4 @@ my_config.yaml
 *.xlsx
 *.RDataTmp
 *.RDataTmp1
+*.duckdb
