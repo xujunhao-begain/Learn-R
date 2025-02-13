@@ -20,9 +20,6 @@ mapping_colname <- function(ls, col) {
   }
 }
 
-#con_tab <- yaml::read_yaml("../../con_tab.yaml")
-
-
 # Customize sequence and colors ------------------------------------------------
 # Set --------------------------------------------------------------------------
 city_level_sort <- c("一线", "新一线", "二线", "三线", "四线", "五线", "")

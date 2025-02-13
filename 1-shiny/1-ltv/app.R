@@ -3,7 +3,8 @@ library(rlang)
 library(tidyverse)
 library(showtext)
 showtext_auto()
-source("../func.R")
+source("func.R")
+source("global.R")
 
 opts <-
   ads_eda_ltv_course_type_hdf_tbl %>%
